@@ -1,0 +1,136 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Image Resize</title>
+<style type="text/css"> 
+.error {
+    color: red;
+}
+</style>
+<script src="/static/js/jquery-2.0.3.min.js"></script>
+<script type="text/javascript">
+$().ready(function() {
+    $("input[name='imageSelect']").click(function() {
+
+        var imageName = $(this).siblings("a").attr('href');
+
+        $("#imageURL").val(imageName);
+        
+        return true;
+    });
+    
+    $("#resizeImg input[name='sizes'],#resizeImg input[name='orientation']").click(function() {
+        var orientation = $("#resizeImg input[name='orientation']:checked").val();
+        
+        var sizeChecked = $("#resizeImg input[name='sizes']:checked").val();
+        
+        //logic to put in the values
+        var imageheight;
+        var imagewidth;
+        
+        if ( sizeChecked == 720 ) {
+            imagewidth = 1280;
+            imageheight = 720;
+        }
+        else if ( sizeChecked == 1080 ) {
+            imagewidth = 1920;
+            imageheight = 1080;
+        }
+        
+        if ( orientation == 'p' ) {
+            twidth = imagewidth;
+            imagewidth = imageheight;
+            imageheight = twidth;
+        }
+        
+        if ( imagewidth ) {
+            $("#width").val(imagewidth);
+            $("#height").val(imageheight);
+        }
+    });
+    
+    $("#resizeImg").submit(function() {
+        //#check for valid field contents
+        imageurl = $("#imageURL").val();
+        imagewidth = $("#width").val();
+        imageheight = $("#height").val();
+        
+        if ( typeof(imageurl) == 'undefined' || imageurl.length < 1 ) {
+            $("#errorstring").append("<p>Image URL must be defined</p>");
+        }
+        if ( typeof(imagewidth) == 'undefined' || imagewidth < 1 ) {
+            $("#errorstring").append("<p>Width must be not be blank</p>");
+        } 
+        if ( typeof(imageheight) == 'undefined' || imageheight < 1 ) {
+            $("#errorstring").append("<p>Height must be not be blank</p>");
+        }       
+
+        $.ajax({
+            url: '/sizer/resize',
+            data: { imageURL: $("#imageURL").val(), 'width': $("#width").val(), 'height': $("#height").val() }, 
+            type: 'POST',
+            dataType: 'json',
+            success: function(data,status,jqXHR) {
+                if ( data.complete == 1 ) {       
+                    results = '<a href="' + data.resized + '"><img border="0" alt="" src="' + data.thumbnail + '"></a><br>Resized';
+                }
+                else {
+                    results = '<div class="error">Error:' + data.errorString + '</div>';
+                }
+                
+                $("#results").html(results);
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown ) {
+                results = "[% loc.localize('js.ThemeNotSaved') %]: " + errorThrown + " [% loc.localize('js.textStatus') %] " + textStatus;
+                $("#results").html(results);
+            },
+        });
+        return false;
+    });
+});
+</script>
+</head>
+<body>
+<p>List of Example Images with thumbnails</p>
+  <table cellspacing="2" cellpadding="2" width="100%">
+     <tr>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/1.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/1.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/2.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/2.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/3.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/3.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/4.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/4.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+   </tr>
+   <tr>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/5.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/5.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/6.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/6.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+    <td align="center" width="25%">
+     <a href="/static/images/TestAlbum/Images/7.jpg"><img border="0" alt="" src="/static/images/TestAlbum/Thumbnails/7.jpg"></a><br><input type="radio" name="imageSelect"><br>
+    </td>
+    <td align="center" valign="top" width="25%">
+        Image Results: <div id="results"></div>
+        <div id="errorstring" class="error"></div>
+    </td>
+   </tr>
+
+  </table>
+
+<form id="resizeImg">
+Resize Image URL: <input type="text" id="imageURL" size="100" value=""><br>
+<input type="radio" value="720" name="sizes">720 <input type="radio" value="1080" name="sizes">1080 <input type="radio" value="custom" name="sizes" checked="checked">Custom <br>
+Width: <input type="text" id="width"> Height: <input type="text" id="height"><br>
+<input type="radio" value="p" name="orientation">Portait <input type="radio" value="l" name="orientation" checked="checked">Landscape<br>
+<input type="submit" value="Resize Image">
+</form>
+</body>
+</html>
